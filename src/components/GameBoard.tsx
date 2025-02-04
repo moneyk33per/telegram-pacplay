@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { PacMan } from './PacMan';
 import { Ghost } from './Ghost';
 import { Pellet } from './Pellet';
+import { useToast } from "@/components/ui/use-toast";
 
 const BOARD_SIZE = 15;
-const CELL_SIZE = 24; // Reduced from 32 to 24 pixels
+const CELL_SIZE = 24;
 const WALL_LAYOUT = [
   "###############",
   "#P    #    G  #",
@@ -39,13 +40,32 @@ export const GameBoard: React.FC = () => {
   const [direction, setDirection] = useState<'right' | 'left' | 'up' | 'down'>('right');
   const [pellets, setPellets] = useState(INITIAL_PELLETS);
   const [score, setScore] = useState(0);
+  const [gameOver, setGameOver] = useState(false);
+  const { toast } = useToast();
 
   const isValidMove = (x: number, y: number) => {
     return x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE && WALL_LAYOUT[y][x] !== '#';
   };
 
+  const checkGhostCollision = () => {
+    const hasCollided = 
+      (pacmanPos.x === ghost1Pos.x && pacmanPos.y === ghost1Pos.y) ||
+      (pacmanPos.x === ghost2Pos.x && pacmanPos.y === ghost2Pos.y);
+
+    if (hasCollided && !gameOver) {
+      setGameOver(true);
+      toast({
+        title: "Game Over!",
+        description: `Final Score: ${score}`,
+        variant: "destructive"
+      });
+    }
+  };
+
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
+      if (gameOver) return;
+
       const newPos = { ...pacmanPos };
       let newDirection = direction;
 
@@ -89,10 +109,12 @@ export const GameBoard: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [pacmanPos, direction, pellets]);
+  }, [pacmanPos, direction, pellets, gameOver, score]);
 
   // Ghost AI for both ghosts
   useEffect(() => {
+    if (gameOver) return;
+
     const moveGhosts = setInterval(() => {
       // Move ghost 1
       const possibleMoves1 = [
@@ -122,7 +144,12 @@ export const GameBoard: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(moveGhosts);
-  }, [ghost1Pos, ghost2Pos]);
+  }, [ghost1Pos, ghost2Pos, gameOver]);
+
+  // Check for ghost collisions
+  useEffect(() => {
+    checkGhostCollision();
+  }, [pacmanPos, ghost1Pos, ghost2Pos]);
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -151,7 +178,7 @@ export const GameBoard: React.FC = () => {
             )
           )
         )}
-        <PacMan position={pacmanPos} direction={direction} cellSize={CELL_SIZE} />
+        {!gameOver && <PacMan position={pacmanPos} direction={direction} cellSize={CELL_SIZE} />}
         <Ghost position={ghost1Pos} cellSize={CELL_SIZE} />
         <Ghost position={ghost2Pos} cellSize={CELL_SIZE} />
         {pellets.map((pellet, i) => (
