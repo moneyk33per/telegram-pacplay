@@ -15,13 +15,12 @@ export const PacMan: React.FC<PacManProps> = ({ position, direction }) => {
 
   return (
     <div
-      className="absolute w-8 h-8 animate-chomp"
+      className="absolute w-8 h-8 transition-all duration-200"
       style={{
         transform: `translate(${position.x * 32}px, ${position.y * 32}px) rotate(${rotationDegrees[direction]}deg)`,
-        transition: 'transform 0.2s linear',
       }}
     >
-      <div className="w-full h-full bg-pacman-yellow rounded-full" />
+      <div className="w-full h-full bg-pacman-yellow rounded-full animate-[chomp_0.3s_ease-in-out_infinite]" />
     </div>
   );
 };

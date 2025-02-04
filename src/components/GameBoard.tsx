@@ -4,17 +4,43 @@ import { Ghost } from './Ghost';
 import { Pellet } from './Pellet';
 
 const BOARD_SIZE = 15;
-const INITIAL_PELLETS = Array.from({ length: BOARD_SIZE * BOARD_SIZE / 3 }, () => ({
-  x: Math.floor(Math.random() * BOARD_SIZE),
-  y: Math.floor(Math.random() * BOARD_SIZE),
-}));
+const WALL_LAYOUT = [
+  "###############",
+  "#P    #    G  #",
+  "# ### # ### # #",
+  "#     #     # #",
+  "# # ##### # # #",
+  "# #       # # #",
+  "# # ##### # # #",
+  "#             #",
+  "# # ##### # # #",
+  "# #       # # #",
+  "# # ##### # # #",
+  "#     #     # #",
+  "# ### # ### # #",
+  "#             #",
+  "###############"
+];
+
+const INITIAL_PELLETS = WALL_LAYOUT.reduce((pellets, row, y) => {
+  row.split('').forEach((cell, x) => {
+    if (cell === ' ') {
+      pellets.push({ x, y });
+    }
+  });
+  return pellets;
+}, [] as { x: number; y: number }[]);
 
 export const GameBoard: React.FC = () => {
   const [pacmanPos, setPacmanPos] = useState({ x: 1, y: 1 });
-  const [ghostPos, setGhostPos] = useState({ x: 13, y: 13 });
+  const [ghostPos, setGhostPos] = useState({ x: 13, y: 1 });
   const [direction, setDirection] = useState<'right' | 'left' | 'up' | 'down'>('right');
   const [pellets, setPellets] = useState(INITIAL_PELLETS);
   const [score, setScore] = useState(0);
+
+  const isValidMove = (x: number, y: number) => {
+    return x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE && WALL_LAYOUT[y][x] !== '#';
+  };
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -23,20 +49,28 @@ export const GameBoard: React.FC = () => {
 
       switch (e.key) {
         case 'ArrowRight':
-          newPos.x = Math.min(BOARD_SIZE - 1, pacmanPos.x + 1);
-          newDirection = 'right';
+          if (isValidMove(pacmanPos.x + 1, pacmanPos.y)) {
+            newPos.x = pacmanPos.x + 1;
+            newDirection = 'right';
+          }
           break;
         case 'ArrowLeft':
-          newPos.x = Math.max(0, pacmanPos.x - 1);
-          newDirection = 'left';
+          if (isValidMove(pacmanPos.x - 1, pacmanPos.y)) {
+            newPos.x = pacmanPos.x - 1;
+            newDirection = 'left';
+          }
           break;
         case 'ArrowUp':
-          newPos.y = Math.max(0, pacmanPos.y - 1);
-          newDirection = 'up';
+          if (isValidMove(pacmanPos.x, pacmanPos.y - 1)) {
+            newPos.y = pacmanPos.y - 1;
+            newDirection = 'up';
+          }
           break;
         case 'ArrowDown':
-          newPos.y = Math.min(BOARD_SIZE - 1, pacmanPos.y + 1);
-          newDirection = 'down';
+          if (isValidMove(pacmanPos.x, pacmanPos.y + 1)) {
+            newPos.y = pacmanPos.y + 1;
+            newDirection = 'down';
+          }
           break;
       }
 
@@ -58,21 +92,21 @@ export const GameBoard: React.FC = () => {
   // Simple ghost AI
   useEffect(() => {
     const moveGhost = setInterval(() => {
-      const dx = pacmanPos.x - ghostPos.x;
-      const dy = pacmanPos.y - ghostPos.y;
-      
-      const newPos = { ...ghostPos };
-      if (Math.abs(dx) > Math.abs(dy)) {
-        newPos.x += dx > 0 ? 1 : -1;
-      } else {
-        newPos.y += dy > 0 ? 1 : -1;
+      const possibleMoves = [
+        { x: ghostPos.x + 1, y: ghostPos.y },
+        { x: ghostPos.x - 1, y: ghostPos.y },
+        { x: ghostPos.x, y: ghostPos.y + 1 },
+        { x: ghostPos.x, y: ghostPos.y - 1 }
+      ].filter(pos => isValidMove(pos.x, pos.y));
+
+      if (possibleMoves.length > 0) {
+        const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+        setGhostPos(randomMove);
       }
-      
-      setGhostPos(newPos);
     }, 1000);
 
     return () => clearInterval(moveGhost);
-  }, [ghostPos, pacmanPos]);
+  }, [ghostPos]);
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -84,6 +118,23 @@ export const GameBoard: React.FC = () => {
           height: BOARD_SIZE * 32 
         }}
       >
+        {/* Render walls */}
+        {WALL_LAYOUT.map((row, y) => 
+          row.split('').map((cell, x) => 
+            cell === '#' && (
+              <div
+                key={`wall-${x}-${y}`}
+                className="absolute bg-pacman-blue"
+                style={{
+                  width: 32,
+                  height: 32,
+                  left: x * 32,
+                  top: y * 32,
+                }}
+              />
+            )
+          )
+        )}
         <PacMan position={pacmanPos} direction={direction} />
         <Ghost position={ghostPos} />
         {pellets.map((pellet, i) => (

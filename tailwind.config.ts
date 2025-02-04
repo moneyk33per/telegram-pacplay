@@ -1,12 +1,12 @@
-import type { Config } from "tailwindcss";
+import { type Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
   content: [
-    "./pages/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-    "./app/**/*.{ts,tsx}",
-    "./src/**/*.{ts,tsx}",
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
   ],
   prefix: "",
   theme: {
@@ -55,24 +55,37 @@ export default {
         pacman: {
           yellow: "#FFFF00",
           blue: "#2121DE",
-          background: "#1A1A2E",
-          white: "#FFFFFF",
-          red: "#FF0000",
-        },
+          background: "#000000",
+          white: "#FFFFFF"
+        }
       },
       keyframes: {
         chomp: {
-          "0%, 100%": { transform: "rotate(45deg)" },
-          "50%": { transform: "rotate(0deg)" },
+          "0%, 100%": { clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)" },
+          "50%": { clipPath: "polygon(0 0, 100% 50%, 100% 50%, 0 100%)" }
+        }
+      },
+      animation: {
+        chomp: "chomp 0.3s ease-in-out infinite"
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
-        blink: {
-          "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.5" },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
       },
       animation: {
-        chomp: "chomp 0.3s ease-in-out infinite",
-        blink: "blink 2s ease-in-out infinite",
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
     },
   },
