@@ -4,6 +4,7 @@ import { Ghost } from './Ghost';
 import { Pellet } from './Pellet';
 
 const BOARD_SIZE = 15;
+const CELL_SIZE = 24; // Reduced from 32 to 24 pixels
 const WALL_LAYOUT = [
   "###############",
   "#P    #    G  #",
@@ -12,7 +13,7 @@ const WALL_LAYOUT = [
   "# # ##### # # #",
   "# #       # # #",
   "# # ##### # # #",
-  "#             #",
+  "#     G       #",
   "# # ##### # # #",
   "# #       # # #",
   "# # ##### # # #",
@@ -33,7 +34,8 @@ const INITIAL_PELLETS = WALL_LAYOUT.reduce((pellets, row, y) => {
 
 export const GameBoard: React.FC = () => {
   const [pacmanPos, setPacmanPos] = useState({ x: 1, y: 1 });
-  const [ghostPos, setGhostPos] = useState({ x: 13, y: 1 });
+  const [ghost1Pos, setGhost1Pos] = useState({ x: 13, y: 1 });
+  const [ghost2Pos, setGhost2Pos] = useState({ x: 7, y: 7 });
   const [direction, setDirection] = useState<'right' | 'left' | 'up' | 'down'>('right');
   const [pellets, setPellets] = useState(INITIAL_PELLETS);
   const [score, setScore] = useState(0);
@@ -89,24 +91,38 @@ export const GameBoard: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [pacmanPos, direction, pellets]);
 
-  // Simple ghost AI
+  // Ghost AI for both ghosts
   useEffect(() => {
-    const moveGhost = setInterval(() => {
-      const possibleMoves = [
-        { x: ghostPos.x + 1, y: ghostPos.y },
-        { x: ghostPos.x - 1, y: ghostPos.y },
-        { x: ghostPos.x, y: ghostPos.y + 1 },
-        { x: ghostPos.x, y: ghostPos.y - 1 }
+    const moveGhosts = setInterval(() => {
+      // Move ghost 1
+      const possibleMoves1 = [
+        { x: ghost1Pos.x + 1, y: ghost1Pos.y },
+        { x: ghost1Pos.x - 1, y: ghost1Pos.y },
+        { x: ghost1Pos.x, y: ghost1Pos.y + 1 },
+        { x: ghost1Pos.x, y: ghost1Pos.y - 1 }
       ].filter(pos => isValidMove(pos.x, pos.y));
 
-      if (possibleMoves.length > 0) {
-        const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-        setGhostPos(randomMove);
+      if (possibleMoves1.length > 0) {
+        const randomMove1 = possibleMoves1[Math.floor(Math.random() * possibleMoves1.length)];
+        setGhost1Pos(randomMove1);
+      }
+
+      // Move ghost 2
+      const possibleMoves2 = [
+        { x: ghost2Pos.x + 1, y: ghost2Pos.y },
+        { x: ghost2Pos.x - 1, y: ghost2Pos.y },
+        { x: ghost2Pos.x, y: ghost2Pos.y + 1 },
+        { x: ghost2Pos.x, y: ghost2Pos.y - 1 }
+      ].filter(pos => isValidMove(pos.x, pos.y));
+
+      if (possibleMoves2.length > 0) {
+        const randomMove2 = possibleMoves2[Math.floor(Math.random() * possibleMoves2.length)];
+        setGhost2Pos(randomMove2);
       }
     }, 1000);
 
-    return () => clearInterval(moveGhost);
-  }, [ghostPos]);
+    return () => clearInterval(moveGhosts);
+  }, [ghost1Pos, ghost2Pos]);
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -114,8 +130,8 @@ export const GameBoard: React.FC = () => {
       <div 
         className="relative bg-pacman-background border-4 border-pacman-blue"
         style={{ 
-          width: BOARD_SIZE * 32, 
-          height: BOARD_SIZE * 32 
+          width: BOARD_SIZE * CELL_SIZE, 
+          height: BOARD_SIZE * CELL_SIZE 
         }}
       >
         {/* Render walls */}
@@ -126,19 +142,20 @@ export const GameBoard: React.FC = () => {
                 key={`wall-${x}-${y}`}
                 className="absolute bg-pacman-blue"
                 style={{
-                  width: 32,
-                  height: 32,
-                  left: x * 32,
-                  top: y * 32,
+                  width: CELL_SIZE,
+                  height: CELL_SIZE,
+                  left: x * CELL_SIZE,
+                  top: y * CELL_SIZE,
                 }}
               />
             )
           )
         )}
-        <PacMan position={pacmanPos} direction={direction} />
-        <Ghost position={ghostPos} />
+        <PacMan position={pacmanPos} direction={direction} cellSize={CELL_SIZE} />
+        <Ghost position={ghost1Pos} cellSize={CELL_SIZE} />
+        <Ghost position={ghost2Pos} cellSize={CELL_SIZE} />
         {pellets.map((pellet, i) => (
-          <Pellet key={i} position={pellet} />
+          <Pellet key={i} position={pellet} cellSize={CELL_SIZE} />
         ))}
       </div>
     </div>

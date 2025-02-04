@@ -2,18 +2,21 @@ import React from 'react';
 
 interface GhostProps {
   position: { x: number; y: number };
+  cellSize: number;
 }
 
-export const Ghost: React.FC<GhostProps> = ({ position }) => {
+export const Ghost: React.FC<GhostProps> = ({ position, cellSize }) => {
   return (
     <div
-      className="absolute w-8 h-8 animate-blink"
+      className="absolute animate-blink"
       style={{
-        transform: `translate(${position.x * 32}px, ${position.y * 32}px)`,
+        width: cellSize,
+        height: cellSize,
+        transform: `translate(${position.x * cellSize}px, ${position.y * cellSize}px)`,
         transition: 'transform 0.2s linear',
       }}
     >
-      <div className="w-full h-full bg-pacman-red rounded-t-full" />
+      <div className="w-full h-full bg-red-500 rounded-t-full" />
     </div>
   );
 };
