@@ -17,7 +17,13 @@ export const Ghost: React.FC<GhostProps> = ({ position, cellSize }) => {
         transition: 'transform 0.4s ease-in-out',
       }}
     >
-      <div className="w-full h-full bg-red-500 rounded-t-full" />
+      <div className="w-full h-full bg-red-500 rounded-t-full relative">
+        <div className="absolute bottom-0 w-full flex justify-between px-1">
+          <div className="w-2 h-3 bg-red-500 rounded-b-full"></div>
+          <div className="w-2 h-3 bg-red-500 rounded-b-full"></div>
+          <div className="w-2 h-3 bg-red-500 rounded-b-full"></div>
+        </div>
+      </div>
     </div>
   );
 };

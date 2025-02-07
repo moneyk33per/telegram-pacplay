@@ -1,27 +1,58 @@
+
 import React, { useState, useEffect } from 'react';
 import { PacMan } from './PacMan';
 import { Ghost } from './Ghost';
 import { Pellet } from './Pellet';
 import { useToast } from "@/components/ui/use-toast";
 
-const BOARD_SIZE = 15;
+const BOARD_SIZE = 45; // Increased by 3x
 const CELL_SIZE = 20;
 const WALL_LAYOUT = [
-  "###############",
-  "#P    #    G  #",
-  "# ### # ### # #",
-  "#     #     # #",
-  "# # ##### # # #",
-  "# #   G   # # #",
-  "# # ##### # # #",
-  "#     G       #",
-  "# # ##### # # #",
-  "# #       # # #",
-  "# # ##### # # #",
-  "#     #     # #",
-  "# ### # ### # #",
-  "#             #",
-  "###############"
+  "#############################################",
+  "#P    #         #           #         G     #",
+  "# ### # ####### # ######### # ########### # #",
+  "#     #         #           #             # #",
+  "# # ########### # ######### # ########### # #",
+  "# #     G       #     G     #             # #",
+  "# # ########### # ######### # ########### # #",
+  "#               #     G     #               #",
+  "# # ########### # ######### # ########### # #",
+  "# #             #           #             # #",
+  "# # ########### # ######### # ########### # #",
+  "#     #         #           #         #     #",
+  "# ### # ####### # ######### # ####### # ### #",
+  "#     #         #           #         #     #",
+  "# # ########### # ######### # ########### # #",
+  "# #             #           #             # #",
+  "# # ########### # ######### # ########### # #",
+  "#               #           #               #",
+  "# # ########### # ######### # ########### # #",
+  "# #     G       #           #             # #",
+  "# # ########### # ######### # ########### # #",
+  "#     #         #           #         #     #",
+  "# ### # ####### # ######### # ####### # ### #",
+  "#     #         #           #         #     #",
+  "# # ########### # ######### # ########### # #",
+  "# #             #           #             # #",
+  "# # ########### # ######### # ########### # #",
+  "#               #           #               #",
+  "# # ########### # ######### # ########### # #",
+  "# #             #           #             # #",
+  "# # ########### # ######### # ########### # #",
+  "#     #         #           #         #     #",
+  "# ### # ####### # ######### # ####### # ### #",
+  "#     #         #           #         #     #",
+  "# # ########### # ######### # ########### # #",
+  "# #             #           #             # #",
+  "# # ########### # ######### # ########### # #",
+  "#               #           #               #",
+  "# # ########### # ######### # ########### # #",
+  "# #             #           #             # #",
+  "# # ########### # ######### # ########### # #",
+  "#     #         #           #         #     #",
+  "# ### # ####### # ######### # ####### # ### #",
+  "#                                           #",
+  "#############################################"
 ];
 
 const INITIAL_PELLETS = WALL_LAYOUT.reduce((pellets, row, y) => {
@@ -35,9 +66,10 @@ const INITIAL_PELLETS = WALL_LAYOUT.reduce((pellets, row, y) => {
 
 export const GameBoard: React.FC = () => {
   const [pacmanPos, setPacmanPos] = useState({ x: 1, y: 1 });
-  const [ghost1Pos, setGhost1Pos] = useState({ x: 13, y: 1 });
+  const [ghost1Pos, setGhost1Pos] = useState({ x: 43, y: 1 });
   const [ghost2Pos, setGhost2Pos] = useState({ x: 7, y: 5 });
-  const [ghost3Pos, setGhost3Pos] = useState({ x: 7, y: 7 });
+  const [ghost3Pos, setGhost3Pos] = useState({ x: 21, y: 7 });
+  const [ghost4Pos, setGhost4Pos] = useState({ x: 7, y: 19 });
   const [direction, setDirection] = useState<'right' | 'left' | 'up' | 'down'>('right');
   const [pellets, setPellets] = useState(INITIAL_PELLETS);
   const [score, setScore] = useState(0);
@@ -48,11 +80,39 @@ export const GameBoard: React.FC = () => {
     return x >= 0 && x < BOARD_SIZE && y >= 0 && y < BOARD_SIZE && WALL_LAYOUT[y][x] !== '#';
   };
 
+  const moveGhostTowardsPacman = (ghostPos: { x: number; y: number }) => {
+    const dx = pacmanPos.x - ghostPos.x;
+    const dy = pacmanPos.y - ghostPos.y;
+    
+    const possibleMoves = [
+      { x: ghostPos.x + Math.sign(dx), y: ghostPos.y },
+      { x: ghostPos.x, y: ghostPos.y + Math.sign(dy) },
+      { x: ghostPos.x - Math.sign(dx), y: ghostPos.y },
+      { x: ghostPos.x, y: ghostPos.y - Math.sign(dy) }
+    ].filter(move => isValidMove(move.x, move.y));
+
+    if (possibleMoves.length > 0) {
+      // Add some randomness to ghost movement (20% chance to move randomly)
+      if (Math.random() < 0.2) {
+        return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+      }
+      
+      // Find the move that gets closest to Pacman
+      return possibleMoves.reduce((best, move) => {
+        const currentDist = Math.abs(move.x - pacmanPos.x) + Math.abs(move.y - pacmanPos.y);
+        const bestDist = Math.abs(best.x - pacmanPos.x) + Math.abs(best.y - pacmanPos.y);
+        return currentDist < bestDist ? move : best;
+      }, possibleMoves[0]);
+    }
+    return ghostPos;
+  };
+
   const checkGhostCollision = () => {
     const hasCollided = 
       (pacmanPos.x === ghost1Pos.x && pacmanPos.y === ghost1Pos.y) ||
       (pacmanPos.x === ghost2Pos.x && pacmanPos.y === ghost2Pos.y) ||
-      (pacmanPos.x === ghost3Pos.x && pacmanPos.y === ghost3Pos.y);
+      (pacmanPos.x === ghost3Pos.x && pacmanPos.y === ghost3Pos.y) ||
+      (pacmanPos.x === ghost4Pos.x && pacmanPos.y === ghost4Pos.y);
 
     if (hasCollided && !gameOver) {
       setGameOver(true);
@@ -117,38 +177,18 @@ export const GameBoard: React.FC = () => {
     if (gameOver) return;
 
     const moveGhosts = setInterval(() => {
-      const moveGhost = (ghostPos: { x: number; y: number }) => {
-        const directions = [
-          { x: 1, y: 0 },
-          { x: -1, y: 0 },
-          { x: 0, y: 1 },
-          { x: 0, y: -1 }
-        ];
-
-        const possibleMoves = directions
-          .filter(dir => isValidMove(ghostPos.x + dir.x, ghostPos.y + dir.y))
-          .map(dir => ({
-            x: ghostPos.x + dir.x,
-            y: ghostPos.y + dir.y
-          }));
-
-        if (possibleMoves.length > 0) {
-          return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-        }
-        return ghostPos;
-      };
-
-      setGhost1Pos(moveGhost(ghost1Pos));
-      setGhost2Pos(moveGhost(ghost2Pos));
-      setGhost3Pos(moveGhost(ghost3Pos));
+      setGhost1Pos(moveGhostTowardsPacman(ghost1Pos));
+      setGhost2Pos(moveGhostTowardsPacman(ghost2Pos));
+      setGhost3Pos(moveGhostTowardsPacman(ghost3Pos));
+      setGhost4Pos(moveGhostTowardsPacman(ghost4Pos));
     }, 400);
 
     return () => clearInterval(moveGhosts);
-  }, [ghost1Pos, ghost2Pos, ghost3Pos, gameOver]);
+  }, [ghost1Pos, ghost2Pos, ghost3Pos, ghost4Pos, pacmanPos, gameOver]);
 
   useEffect(() => {
     checkGhostCollision();
-  }, [pacmanPos, ghost1Pos, ghost2Pos, ghost3Pos]);
+  }, [pacmanPos, ghost1Pos, ghost2Pos, ghost3Pos, ghost4Pos]);
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -180,6 +220,7 @@ export const GameBoard: React.FC = () => {
         <Ghost position={ghost1Pos} cellSize={CELL_SIZE} />
         <Ghost position={ghost2Pos} cellSize={CELL_SIZE} />
         <Ghost position={ghost3Pos} cellSize={CELL_SIZE} />
+        <Ghost position={ghost4Pos} cellSize={CELL_SIZE} />
         {pellets.map((pellet, i) => (
           <Pellet key={i} position={pellet} cellSize={CELL_SIZE} />
         ))}
