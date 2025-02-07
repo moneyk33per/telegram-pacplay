@@ -1,4 +1,6 @@
 
+import { GameBoard } from "@/components/GameBoard";
+
 const Index = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-pacman-background p-4">
