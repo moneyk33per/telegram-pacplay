@@ -1,58 +1,27 @@
-
 import React, { useState, useEffect } from 'react';
 import { PacMan } from './PacMan';
 import { Ghost } from './Ghost';
 import { Pellet } from './Pellet';
 import { useToast } from "@/components/ui/use-toast";
 
-const BOARD_SIZE = 45; // Increased by 3x
+const BOARD_SIZE = 15; // Back to original size
 const CELL_SIZE = 20;
 const WALL_LAYOUT = [
-  "#############################################",
-  "#P    #         #           #         G     #",
-  "# ### # ####### # ######### # ########### # #",
-  "#     #         #           #             # #",
-  "# # ########### # ######### # ########### # #",
-  "# #     G       #     G     #             # #",
-  "# # ########### # ######### # ########### # #",
-  "#               #     G     #               #",
-  "# # ########### # ######### # ########### # #",
-  "# #             #           #             # #",
-  "# # ########### # ######### # ########### # #",
-  "#     #         #           #         #     #",
-  "# ### # ####### # ######### # ####### # ### #",
-  "#     #         #           #         #     #",
-  "# # ########### # ######### # ########### # #",
-  "# #             #           #             # #",
-  "# # ########### # ######### # ########### # #",
-  "#               #           #               #",
-  "# # ########### # ######### # ########### # #",
-  "# #     G       #           #             # #",
-  "# # ########### # ######### # ########### # #",
-  "#     #         #           #         #     #",
-  "# ### # ####### # ######### # ####### # ### #",
-  "#     #         #           #         #     #",
-  "# # ########### # ######### # ########### # #",
-  "# #             #           #             # #",
-  "# # ########### # ######### # ########### # #",
-  "#               #           #               #",
-  "# # ########### # ######### # ########### # #",
-  "# #             #           #             # #",
-  "# # ########### # ######### # ########### # #",
-  "#     #         #           #         #     #",
-  "# ### # ####### # ######### # ####### # ### #",
-  "#     #         #           #         #     #",
-  "# # ########### # ######### # ########### # #",
-  "# #             #           #             # #",
-  "# # ########### # ######### # ########### # #",
-  "#               #           #               #",
-  "# # ########### # ######### # ########### # #",
-  "# #             #           #             # #",
-  "# # ########### # ######### # ########### # #",
-  "#     #         #           #         #     #",
-  "# ### # ####### # ######### # ####### # ### #",
-  "#                                           #",
-  "#############################################"
+  "###############",
+  "#P    #      G#",
+  "# ### # ##### #",
+  "#     #       #",
+  "# # ### ### # #",
+  "# #   G     # #",
+  "# # ####### # #",
+  "#     G       #",
+  "# # ####### # #",
+  "# #         # #",
+  "# # ####### # #",
+  "#     #     G #",
+  "# ### # ##### #",
+  "#             #",
+  "###############"
 ];
 
 const INITIAL_PELLETS = WALL_LAYOUT.reduce((pellets, row, y) => {
@@ -66,14 +35,15 @@ const INITIAL_PELLETS = WALL_LAYOUT.reduce((pellets, row, y) => {
 
 export const GameBoard: React.FC = () => {
   const [pacmanPos, setPacmanPos] = useState({ x: 1, y: 1 });
-  const [ghost1Pos, setGhost1Pos] = useState({ x: 43, y: 1 });
+  const [ghost1Pos, setGhost1Pos] = useState({ x: 13, y: 1 });
   const [ghost2Pos, setGhost2Pos] = useState({ x: 7, y: 5 });
-  const [ghost3Pos, setGhost3Pos] = useState({ x: 21, y: 7 });
-  const [ghost4Pos, setGhost4Pos] = useState({ x: 7, y: 19 });
+  const [ghost3Pos, setGhost3Pos] = useState({ x: 7, y: 7 });
+  const [ghost4Pos, setGhost4Pos] = useState({ x: 13, y: 11 });
   const [direction, setDirection] = useState<'right' | 'left' | 'up' | 'down'>('right');
   const [pellets, setPellets] = useState(INITIAL_PELLETS);
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
+  const [lives, setLives] = useState(3); // Added lives state
   const { toast } = useToast();
 
   const isValidMove = (x: number, y: number) => {
@@ -115,12 +85,23 @@ export const GameBoard: React.FC = () => {
       (pacmanPos.x === ghost4Pos.x && pacmanPos.y === ghost4Pos.y);
 
     if (hasCollided && !gameOver) {
-      setGameOver(true);
-      toast({
-        title: "Game Over!",
-        description: `Final Score: ${score}`,
-        variant: "destructive"
-      });
+      if (lives > 1) {
+        setLives(lives - 1);
+        // Reset Pacman position when losing a life
+        setPacmanPos({ x: 1, y: 1 });
+        toast({
+          title: "Lost a life!",
+          description: `${lives - 1} lives remaining`,
+          variant: "destructive"
+        });
+      } else {
+        setGameOver(true);
+        toast({
+          title: "Game Over!",
+          description: `Final Score: ${score}`,
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -192,9 +173,12 @@ export const GameBoard: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="text-2xl text-pacman-yellow font-bold">Score: {score}</div>
+      <div className="flex justify-between w-full max-w-[300px]">
+        <div className="text-2xl text-pacman-yellow font-bold">Score: {score}</div>
+        <div className="text-2xl text-pacman-yellow font-bold">Lives: {lives}</div>
+      </div>
       <div 
-        className="relative bg-pacman-background border-4 border-pacman-blue"
+        className="relative bg-pacman-background border-2 border-pacman-blue"
         style={{ 
           width: BOARD_SIZE * CELL_SIZE, 
           height: BOARD_SIZE * CELL_SIZE 
