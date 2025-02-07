@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface GhostProps {
@@ -13,7 +14,7 @@ export const Ghost: React.FC<GhostProps> = ({ position, cellSize }) => {
         width: cellSize,
         height: cellSize,
         transform: `translate(${position.x * cellSize}px, ${position.y * cellSize}px)`,
-        transition: 'transform 0.2s linear',
+        transition: 'transform 0.4s ease-in-out',
       }}
     >
       <div className="w-full h-full bg-red-500 rounded-t-full" />
