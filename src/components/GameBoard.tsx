@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { PacMan } from './PacMan';
 import { Ghost } from './Ghost';
 import { Pellet } from './Pellet';
 import { useToast } from "@/components/ui/use-toast";
 
-const BOARD_SIZE = 15; // Back to original size
+const BOARD_SIZE = 15;
 const CELL_SIZE = 20;
 const WALL_LAYOUT = [
   "###############",
@@ -16,7 +17,7 @@ const WALL_LAYOUT = [
   "# # ####### # #",
   "#     G       #",
   "# # ####### # #",
-  "# #         # #",
+  "# #    G    # #", // Added new ghost position
   "# # ####### # #",
   "#     #     G #",
   "# ### # ##### #",
@@ -39,11 +40,12 @@ export const GameBoard: React.FC = () => {
   const [ghost2Pos, setGhost2Pos] = useState({ x: 7, y: 5 });
   const [ghost3Pos, setGhost3Pos] = useState({ x: 7, y: 7 });
   const [ghost4Pos, setGhost4Pos] = useState({ x: 13, y: 11 });
+  const [ghost5Pos, setGhost5Pos] = useState({ x: 7, y: 9 }); // New ghost
   const [direction, setDirection] = useState<'right' | 'left' | 'up' | 'down'>('right');
   const [pellets, setPellets] = useState(INITIAL_PELLETS);
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
-  const [lives, setLives] = useState(3); // Added lives state
+  const [lives, setLives] = useState(3);
   const { toast } = useToast();
 
   const isValidMove = (x: number, y: number) => {
@@ -54,23 +56,31 @@ export const GameBoard: React.FC = () => {
     const dx = pacmanPos.x - ghostPos.x;
     const dy = pacmanPos.y - ghostPos.y;
     
+    // Calculate all possible moves including diagonals
     const possibleMoves = [
-      { x: ghostPos.x + Math.sign(dx), y: ghostPos.y },
-      { x: ghostPos.x, y: ghostPos.y + Math.sign(dy) },
-      { x: ghostPos.x - Math.sign(dx), y: ghostPos.y },
-      { x: ghostPos.x, y: ghostPos.y - Math.sign(dy) }
+      { x: ghostPos.x + Math.sign(dx), y: ghostPos.y }, // horizontal
+      { x: ghostPos.x, y: ghostPos.y + Math.sign(dy) }, // vertical
+      { x: ghostPos.x + Math.sign(dx), y: ghostPos.y + Math.sign(dy) }, // diagonal
+      { x: ghostPos.x - Math.sign(dx), y: ghostPos.y }, // opposite horizontal
+      { x: ghostPos.x, y: ghostPos.y - Math.sign(dy) }, // opposite vertical
     ].filter(move => isValidMove(move.x, move.y));
 
     if (possibleMoves.length > 0) {
-      // Add some randomness to ghost movement (20% chance to move randomly)
-      if (Math.random() < 0.2) {
+      // Only 10% chance to move randomly now (down from 20%)
+      if (Math.random() < 0.1) {
         return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
       }
       
-      // Find the move that gets closest to Pacman
+      // Enhanced pathfinding - find the move that gets closest to Pacman
       return possibleMoves.reduce((best, move) => {
-        const currentDist = Math.abs(move.x - pacmanPos.x) + Math.abs(move.y - pacmanPos.y);
-        const bestDist = Math.abs(best.x - pacmanPos.x) + Math.abs(best.y - pacmanPos.y);
+        const currentDist = Math.sqrt(
+          Math.pow(move.x - pacmanPos.x, 2) + 
+          Math.pow(move.y - pacmanPos.y, 2)
+        );
+        const bestDist = Math.sqrt(
+          Math.pow(best.x - pacmanPos.x, 2) + 
+          Math.pow(best.y - pacmanPos.y, 2)
+        );
         return currentDist < bestDist ? move : best;
       }, possibleMoves[0]);
     }
@@ -82,12 +92,12 @@ export const GameBoard: React.FC = () => {
       (pacmanPos.x === ghost1Pos.x && pacmanPos.y === ghost1Pos.y) ||
       (pacmanPos.x === ghost2Pos.x && pacmanPos.y === ghost2Pos.y) ||
       (pacmanPos.x === ghost3Pos.x && pacmanPos.y === ghost3Pos.y) ||
-      (pacmanPos.x === ghost4Pos.x && pacmanPos.y === ghost4Pos.y);
+      (pacmanPos.x === ghost4Pos.x && pacmanPos.y === ghost4Pos.y) ||
+      (pacmanPos.x === ghost5Pos.x && pacmanPos.y === ghost5Pos.y); // Added new ghost check
 
     if (hasCollided && !gameOver) {
       if (lives > 1) {
         setLives(lives - 1);
-        // Reset Pacman position when losing a life
         setPacmanPos({ x: 1, y: 1 });
         toast({
           title: "Lost a life!",
@@ -162,14 +172,15 @@ export const GameBoard: React.FC = () => {
       setGhost2Pos(moveGhostTowardsPacman(ghost2Pos));
       setGhost3Pos(moveGhostTowardsPacman(ghost3Pos));
       setGhost4Pos(moveGhostTowardsPacman(ghost4Pos));
-    }, 400);
+      setGhost5Pos(moveGhostTowardsPacman(ghost5Pos)); // Move new ghost
+    }, 300); // Reduced from 400ms to 300ms for faster ghost movement
 
     return () => clearInterval(moveGhosts);
-  }, [ghost1Pos, ghost2Pos, ghost3Pos, ghost4Pos, pacmanPos, gameOver]);
+  }, [ghost1Pos, ghost2Pos, ghost3Pos, ghost4Pos, ghost5Pos, pacmanPos, gameOver]);
 
   useEffect(() => {
     checkGhostCollision();
-  }, [pacmanPos, ghost1Pos, ghost2Pos, ghost3Pos, ghost4Pos]);
+  }, [pacmanPos, ghost1Pos, ghost2Pos, ghost3Pos, ghost4Pos, ghost5Pos]);
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -205,6 +216,7 @@ export const GameBoard: React.FC = () => {
         <Ghost position={ghost2Pos} cellSize={CELL_SIZE} />
         <Ghost position={ghost3Pos} cellSize={CELL_SIZE} />
         <Ghost position={ghost4Pos} cellSize={CELL_SIZE} />
+        <Ghost position={ghost5Pos} cellSize={CELL_SIZE} />
         {pellets.map((pellet, i) => (
           <Pellet key={i} position={pellet} cellSize={CELL_SIZE} />
         ))}
