@@ -40,7 +40,7 @@ export const GameBoard: React.FC = () => {
   const [ghost2Pos, setGhost2Pos] = useState({ x: 7, y: 5 });
   const [ghost3Pos, setGhost3Pos] = useState({ x: 7, y: 7 });
   const [ghost4Pos, setGhost4Pos] = useState({ x: 13, y: 11 });
-  const [ghost5Pos, setGhost5Pos] = useState({ x: 7, y: 9 }); // New ghost
+  const [ghost5Pos, setGhost5Pos] = useState({ x: 7, y: 9 });
   const [direction, setDirection] = useState<'right' | 'left' | 'up' | 'down'>('right');
   const [pellets, setPellets] = useState(INITIAL_PELLETS);
   const [score, setScore] = useState(0);
@@ -172,8 +172,8 @@ export const GameBoard: React.FC = () => {
       setGhost2Pos(moveGhostTowardsPacman(ghost2Pos));
       setGhost3Pos(moveGhostTowardsPacman(ghost3Pos));
       setGhost4Pos(moveGhostTowardsPacman(ghost4Pos));
-      setGhost5Pos(moveGhostTowardsPacman(ghost5Pos)); // Move new ghost
-    }, 300); // Reduced from 400ms to 300ms for faster ghost movement
+      setGhost5Pos(moveGhostTowardsPacman(ghost5Pos));
+    }, 600); // Changed from 300ms to 600ms to make ghosts move half as fast
 
     return () => clearInterval(moveGhosts);
   }, [ghost1Pos, ghost2Pos, ghost3Pos, ghost4Pos, ghost5Pos, pacmanPos, gameOver]);
